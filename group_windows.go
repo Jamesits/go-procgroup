@@ -37,7 +37,7 @@ type Cmd struct {
 	group *Group
 }
 
-func (c *Cmd) Start() error {
+func (c *Cmd) Start() (err error) {
 	if c.Cmd.SysProcAttr == nil {
 		c.Cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
@@ -45,19 +45,21 @@ func (c *Cmd) Start() error {
 	// https://learn.microsoft.com/en-us/windows/win32/api/jobapi2/nf-jobapi2-assignprocesstojobobject
 	// If the process is being monitored by the Program Compatibility Assistant (PCA), it is placed into a compatibility job. Therefore, the process must be created using CREATE_BREAKAWAY_FROM_JOB before it can be placed in another job.
 	c.Cmd.SysProcAttr.CreationFlags |= windows.CREATE_SUSPENDED | windows.CREATE_BREAKAWAY_FROM_JOB
-	err := c.Cmd.Start()
+	err = c.Cmd.Start()
 	if err != nil {
 		return fmt.Errorf("start: %w", err)
 	}
 
 	hProcess, err := windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE, false, uint32(c.Cmd.Process.Pid))
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("OpenProcess: %w", err)
 	}
 	defer windows.CloseHandle(hProcess)
 
 	hSnapshot, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPTHREAD, uint32(c.Cmd.Process.Pid))
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("CreateToolhelp32Snapshot: %w", err)
 	}
 	defer windows.CloseHandle(hSnapshot)
@@ -67,6 +69,7 @@ func (c *Cmd) Start() error {
 	threadEntry.Size = uint32(unsafe.Sizeof(*threadEntry))
 	err = windows.Thread32First(hSnapshot, threadEntry)
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("Thread32First: %w", err)
 	}
 	for {
@@ -77,25 +80,39 @@ func (c *Cmd) Start() error {
 		threadEntry.Size = uint32(unsafe.Sizeof(*threadEntry))
 		err = windows.Thread32Next(hSnapshot, threadEntry)
 		if err != nil {
+			terminateProcess(uint32(c.Cmd.Process.Pid))
 			return fmt.Errorf("Thread32Next: %w", err)
 		}
 	}
 
 	hThread, err := windows.OpenThread(windows.THREAD_SUSPEND_RESUME, false, threadEntry.ThreadID)
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("OpenThread: %w", err)
 	}
 	defer windows.CloseHandle(hThread)
 
 	err = windows.AssignProcessToJobObject(c.group.hJob, hProcess)
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("AssignProcessToJobObject: %w", err)
 	}
 
 	_, err = windows.ResumeThread(hThread)
 	if err != nil {
+		terminateProcess(uint32(c.Cmd.Process.Pid))
 		return fmt.Errorf("ResumeThread: %w", err)
 	}
 
 	return nil
+}
+
+func terminateProcess(pid uint32) {
+	hProcess, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, pid)
+	if err != nil {
+		return
+	}
+	defer windows.CloseHandle(hProcess)
+
+	_ = windows.TerminateProcess(hProcess, 1)
 }
