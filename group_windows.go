@@ -12,7 +12,6 @@ import (
 
 type Group struct {
 	hJob windows.Handle
-	cmds []*Cmd
 }
 
 func NewGroup() (ret *Group, err error) {
@@ -24,7 +23,6 @@ func NewGroup() (ret *Group, err error) {
 
 func (g *Group) NewCmd() (*Cmd, error) {
 	cmd := &Cmd{group: g}
-	g.cmds = append(g.cmds, cmd)
 	return cmd, nil
 }
 
@@ -38,6 +36,10 @@ type Cmd struct {
 }
 
 func (c *Cmd) Start() (err error) {
+	if c.group == nil {
+		panic("you are expected to create cmd from a group")
+	}
+
 	if c.Cmd.SysProcAttr == nil {
 		c.Cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
