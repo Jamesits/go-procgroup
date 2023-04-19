@@ -1,6 +1,6 @@
 //go:build windows
 
-package go_procgroup
+package procgroup
 
 import (
 	"fmt"
