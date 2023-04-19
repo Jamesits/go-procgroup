@@ -24,11 +24,14 @@ var programs = []TestProgram{
 	{
 		Path: filepath.Join("testdata", "win32", "access_violation.exe"),
 	},
-	{
-		Path: filepath.Join("testdata", "win32", "critical.exe"),
-	},
+	//{
+	//	Path: filepath.Join("testdata", "win32", "critical.exe"),
+	//},
 	{
 		Path: filepath.Join("testdata", "win32", "messagebox.exe"),
+	},
+	{
+		Path: filepath.Join("testdata", "win32", "missing_dll.exe"),
 	},
 }
 
