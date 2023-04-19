@@ -25,6 +25,9 @@ var programs = []TestProgram{
 		Path: filepath.Join("testdata", "win32", "access_violation.exe"),
 	},
 	{
+		Path: filepath.Join("testdata", "win32", "critical.exe"),
+	},
+	{
 		Path: filepath.Join("testdata", "win32", "messagebox.exe"),
 	},
 }
@@ -43,6 +46,8 @@ func TestGroup(t *testing.T) {
 		assert.NotNil(t, cmd)
 
 		cmd.Path = p.Path
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		err = cmd.Start()
 		assert.NoError(t, err)
 
