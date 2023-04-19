@@ -42,7 +42,9 @@ func (c *Cmd) Start() error {
 		c.Cmd.SysProcAttr = &syscall.SysProcAttr{}
 	}
 
-	c.Cmd.SysProcAttr.CreationFlags |= windows.CREATE_SUSPENDED
+	// https://learn.microsoft.com/en-us/windows/win32/api/jobapi2/nf-jobapi2-assignprocesstojobobject
+	// If the process is being monitored by the Program Compatibility Assistant (PCA), it is placed into a compatibility job. Therefore, the process must be created using CREATE_BREAKAWAY_FROM_JOB before it can be placed in another job.
+	c.Cmd.SysProcAttr.CreationFlags |= windows.CREATE_SUSPENDED | windows.CREATE_BREAKAWAY_FROM_JOB
 	err := c.Cmd.Start()
 	if err != nil {
 		return fmt.Errorf("start: %w", err)
