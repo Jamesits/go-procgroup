@@ -32,6 +32,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer c.Wait()
 
 	// wait a while
 	time.Sleep(3 * time.Second)
