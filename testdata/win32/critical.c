@@ -1,3 +1,5 @@
+// gcc critical.c -o critical.exe
+
 #include <windows.h>
 #include <stdio.h>
 

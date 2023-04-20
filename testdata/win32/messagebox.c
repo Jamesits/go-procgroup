@@ -1,3 +1,5 @@
+// gcc messagebox.c -o messagebox.exe
+
 #include <windows.h>
 
 int main(void) {
