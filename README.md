@@ -8,8 +8,10 @@ Offers the ability to group the child processes and kill each group at once.
 package main
 
 import (
-	"filepath"
 	"github.com/jamesits/go-procgroup"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 func main() {
