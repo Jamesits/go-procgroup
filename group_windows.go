@@ -133,6 +133,13 @@ func (c *Cmd) Start() (err error) {
 	return nil
 }
 
+func (c *Cmd) Run() error {
+	if err := c.Start(); err != nil {
+		return err
+	}
+	return c.Wait()
+}
+
 func terminateProcess(pid uint32) {
 	hProcess, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, pid)
 	if err != nil {
