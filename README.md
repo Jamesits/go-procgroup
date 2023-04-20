@@ -1,8 +1,10 @@
 # go-procgroup
 
-Offers the ability to group the child processes and kill each group at once.
+Group your child processes and kill them at once.
 
 ## Usage
+
+The object created by `group.NewCmd()` can be used as a drop-in of `exec.Cmd`.
 
 ```go
 package main
@@ -26,7 +28,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	c.Path = filepath.Join(os.Getenv("WINDIR"), "system32", "notepad.exe")
+	c.Path = filepath.Join(os.Getenv("WINDIR"), "system32", "cmd.exe")
+	c.Args = []string{"cmd.exe", "/c", "notepad.exe"} // instruct CMD to create a subprocess
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
@@ -34,7 +37,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer c.Wait()
+	defer c.Wait() // you still need to `Wait` for it so that Golang runtime does not leak memory
 
 	// wait a while
 	time.Sleep(3 * time.Second)
@@ -46,3 +49,11 @@ func main() {
 	}
 }
 ```
+
+## Caveats
+
+This library does not offer any level of security, and process grouping is not a security boundary. There is no
+guarantee that a malicious process cannot break away from its process group. The library only offers a better
+abstraction for managing long-running service processes and their own child processes.
+
+To ensure a clean cleanup, the child processes you start will be killed automatically if the parent process dies.
