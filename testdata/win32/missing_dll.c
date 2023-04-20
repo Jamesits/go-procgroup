@@ -5,6 +5,6 @@ __declspec(dllimport) int __cdecl test();
 
 int main(int argc, char** argv)
 {
-  printf("%d\n", test());
-  return 0;
+    printf("%d\n", test());
+    return 0;
 }
