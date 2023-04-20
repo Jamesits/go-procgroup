@@ -17,8 +17,22 @@ type Group struct {
 func NewGroup() (ret *Group, err error) {
 	ret = &Group{}
 	ret.hJob, err = windows.CreateJobObject(nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	return ret, err
+	extendedLimitInformation := &windows.JOBOBJECT_EXTENDED_LIMIT_INFORMATION{
+		BasicLimitInformation: windows.JOBOBJECT_BASIC_LIMIT_INFORMATION{
+			LimitFlags: windows.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | windows.JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION | windows.JOB_OBJECT_LIMIT_PRESERVE_JOB_TIME,
+		},
+	}
+
+	succ, err := windows.SetInformationJobObject(ret.hJob, windows.JobObjectExtendedLimitInformation, uintptr(unsafe.Pointer(extendedLimitInformation)), uint32(unsafe.Sizeof(*extendedLimitInformation)))
+	if succ == 0 {
+		return nil, err
+	}
+
+	return ret, nil
 }
 
 func (g *Group) NewCmd() (*Cmd, error) {
